@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import * as Checkbox from '@radix-ui/react-checkbox'
 import { CheckIcon } from '@radix-ui/react-icons'
 import { v4 as uuidv4 } from 'uuid'
 
 import logo from './assets/logo.svg'
+import clipboard from './assets/clipboard.svg'
 import './App.css'
 import { PlusCircle, Trash } from 'phosphor-react'
 
@@ -14,33 +15,26 @@ interface Todos {
 }
 
 function App() {
-  const todosList = [
-    {
-      id: 12345,
-      description:
-        'Lorem ipsum dolor sit amet consectetur adipisicing elit. Est quisquam, voluptatum odio aperiam eius excepturi, recusandae, neque rerum molestias obcaecati magni soluta laboriosam exercitationem vel aspernatur assumenda reprehenderit eveniet unde!',
-      isChecked: false,
-    },
-    {
-      id: 12346,
-      description:
-        'Lorem ipsum dolor sit amet consectetur adipisicing elit. Est quisquam, voluptatum odio aperiam eius excepturi, recusandae, neque rerum molestias obcaecati magni soluta laboriosam exercitationem vel aspernatur assumenda reprehenderit eveniet unde!',
-      isChecked: false,
-    },
-    {
-      id: 12347,
-      description:
-        'Lorem ipsum dolor sit amet consectetur adipisicing elit. Est quisquam, voluptatum odio aperiam eius excepturi, recusandae, neque rerum molestias obcaecati magni soluta laboriosam exercitationem vel aspernatur assumenda reprehenderit eveniet unde!',
-      isChecked: true,
-    },
-  ]
+  const todosList: Todos[] = []
 
   const [todos, setTodos] = useState<Todos[]>(todosList)
+  const [count, setCount] = useState(0)
+  const [countAccomplished, setCountAccomplished] = useState(0)
 
-  function handleCreateNewTodo() {
-    event.preventDefault()
+  useEffect(() => setCount(todos.length), [todos.length])
 
-    const description = event.target.description.value
+  useEffect(
+    () =>
+      setCountAccomplished(
+        todos.filter((todo) => todo.isChecked === true).length,
+      ),
+    [todos],
+  )
+
+  function handleCreateNewTodo(event: React.MouseEvent<HTMLFormElement>) {
+    event?.preventDefault()
+
+    const description = event?.currentTarget.description.value
 
     const newTodo = {
       id: uuidv4(),
@@ -50,13 +44,106 @@ function App() {
 
     setTodos([...todos, newTodo])
 
-    event.target.reset()
+    event.currentTarget.reset()
+  }
+
+  function handleCheck(event: React.MouseEvent<HTMLDivElement>) {
+    const id = event?.currentTarget.id
+
+    todos.forEach((todo) => {
+      if (id === todo.id) {
+        todo.isChecked = !todo.isChecked
+      }
+    })
+
+    setTodos([...todos])
+  }
+
+  function handleDelete(event: React.MouseEvent<HTMLDivElement>) {
+    const id = event?.currentTarget.id
+
+    let todoIndex = -1
+
+    todos.forEach((todo) => {
+      todoIndex += 1
+      if (id === todo.id) {
+        todos.splice(todoIndex, 1)
+      }
+    })
+
+    setTodos([...todos])
+  }
+
+  function displayTodos() {
+    if (count === 0) {
+      return (
+        <div className="empty-todo-list-container">
+          <div className="empty-todo-list">
+            <img src={clipboard} alt="Clipboard Icon" />
+            <p>
+              <span className="logo react">
+                You have no todo&apos;s added yet
+              </span>
+              <br />
+              Create your todo&apos;s list and organize your day
+            </p>
+            <span></span>
+          </div>
+        </div>
+      )
+    } else {
+      return (
+        <div className="todo-list">
+          <ul>
+            {todos.map((todo) => {
+              return (
+                <li key={todo.id}>
+                  <div className="todo-card">
+                    <div
+                      className="todo-check"
+                      onClick={handleCheck}
+                      id={todo.id}
+                    >
+                      <Checkbox.Root className="CheckboxRoot">
+                        <Checkbox.Indicator className="CheckboxIndicator">
+                          <CheckIcon />
+                        </Checkbox.Indicator>
+                      </Checkbox.Root>
+                    </div>
+                    <div
+                      className="todo-content"
+                      aria-checked={todo.isChecked}
+                      style={{
+                        textDecoration: todo.isChecked
+                          ? 'line-through'
+                          : 'none',
+                      }}
+                    >
+                      {todo.description}
+                    </div>
+                    <div>
+                      <div
+                        className="trash-icon-container"
+                        onClick={handleDelete}
+                        id={todo.id}
+                      >
+                        <Trash size={24} />
+                      </div>
+                    </div>
+                  </div>
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )
+    }
   }
 
   return (
     <div className="App">
       <header>
-        <img src={logo} className="logo react" alt="React logo" />
+        <img src={logo} alt="Rocket" />
       </header>
 
       <form onSubmit={handleCreateNewTodo} className="add-new-todo">
@@ -75,47 +162,15 @@ function App() {
         <div className="summary-content">
           <div>
             <span className="summary-created">Created Tasks</span>
-            <span className="summary-numbers">5</span>
+            <span className="summary-numbers">{count}</span>
           </div>
           <div>
             <span className="summary-accomplished">Accomplished</span>
-            <span className="summary-numbers">2 de 5</span>
+            <span className="summary-numbers">{`${countAccomplished} de ${count}`}</span>
           </div>
         </div>
       </div>
-      <div className="todo-list">
-        <ul>
-          {todos.map((todo) => {
-            return (
-              <li key={todo.id}>
-                <div className="todo-card">
-                  <div className="todo-check">
-                    <Checkbox.Root className="CheckboxRoot" id="c1">
-                      <Checkbox.Indicator className="CheckboxIndicator">
-                        <CheckIcon />
-                      </Checkbox.Indicator>
-                    </Checkbox.Root>
-                  </div>
-                  <div className="todo-content">{todo.description}</div>
-                  <Trash className="trash-icon" size={24} />
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-
-      {/* <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p> */}
+      {displayTodos()}
     </div>
   )
 }
